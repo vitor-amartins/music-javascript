@@ -4,141 +4,100 @@ const getNote = (string) => {
   const notes = {
     C: 16.35,
     'C#': 17.32,
+    'CS': 17.32,
     Db: 17.32,
     D: 18.35,
     'D#': 19.45,
+    'DS': 19.45,
     Eb: 19.45,
     E: 20.60,
     F: 21.83,
     'F#': 23.12,
+    'FS': 23.12,
     Gb: 23.12,
     G: 24.5,
     'G#': 25.96,
+    'GS': 25.96,
     Ab: 25.96,
     A: 27.50,
     'A#': 29.14,
+    'AS': 29.14,
     Bb: 29.14,
     B: 30.87,
   };
-  
+
   const [noteName, noteOctaveString] = string.split(/(\d+)/);
 
   const noteOctave = Number(noteOctaveString);
 
   console.log(noteName, noteOctave);
 
-
   return notes[noteName] * (2 ** noteOctave);
 };
 
-const intro1 = [
-  'D5', 'D6', 'A5', 'G5', 'G6', 'A5', 'F#6', 'A5',
-];
-const intro2 = [
-  'E5', 'D6', 'A5', 'G5', 'G6', 'A5', 'F#6', 'A5',
-];
-const intro3 = [
-  'G5', 'D6', 'A5', 'G5', 'G6', 'A5', 'F#6', 'A5',
-];
-const introFinal = [
-  'E6', 'A5', 'D6', 'A5', 'E6', 'A5', 'F#6', 'A5', 'G6', 'A5', 'F#6', 'A5', 'E6', 'A5', 'D6', 'D6',
-];
-
-const normalIntro = [
-  ...intro1,
-  ...intro1,
-  ...intro2,
-  ...intro2,
-  ...intro3,
-  ...intro3,
-  ...intro1,
-  ...intro1,
-];
-
-const lastIntro = [
-  ...intro1,
-  ...intro1,
-  ...intro2,
-  ...intro2,
-  ...intro3,
-  ...intro3,
-  ...introFinal,
-];
-
-const intro = [
-  ...normalIntro,
-  ...normalIntro,
-  ...lastIntro,
-];
-
-const fullSong = [
-  ...intro,
-];
-
-const bassWait = [
-  'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0',
-  'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0',
-  'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0',
-  'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0',
-  'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0',
-  'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0', 'C0',
-  'D3', 'D3', 'D3', 'D3', 'D3', 'D3', 'D3', 'D3',
-  'D3', 'D3', 'D3', 'D3', 'D3', 'D3', 'D3', 'A3',
-];
-
-const bassIntro1 = [
-  'D4', 'D4', 'D4', 'F#4', 'F#4', 'D4', 'F#4', 'G4', 'A4', 'A4',
-  'B4', 'A4', 'G4', 'F#4', 'D4', 'A3', 'C4', 'C4', 'C4', 'E4', 'E4', 'E4', 'E4',
-  'C4', 'F4', 'E4', 'C4', 'F4', 'F4', 'E4', 'C4', 'B3', 'G3', 'G3', 'G3', 'G3',
-  'G3', 'G3', 'G3', 'D4', 'G4', 'G4', 'G4', 'G4', 'G4', 'G4', 'G4',
-  'D4', 'G4', 'F#4', 'D4', 'G4', 'G4', 'F#4', 'D4', 'D4', 'D4', 'D4', 'D4', 'D4',
-  'D4', 'D4', 'D4', 'D4',
-];
-
-const bass = [
-  // ...bassWait,
-  ...bassIntro1,
-];
+const SIXTEENTH = 1;
+const EIGHTH = SIXTEENTH * 2;
+const QUARTER = SIXTEENTH * 4;
+const HALF = SIXTEENTH * 8;
+const WHOLE = SIXTEENTH * 16;
 
 const createOscillator = () => {
   const context = new AudioContext();
-  
+
   const oscillator = context.createOscillator();
-  
+
   oscillator.connect(context.destination);
   oscillator.type = 'sine';
 
   return oscillator;
-}
-
-const playSong = (song, bass) => {
-  let i = 1;
-
-  const oscillator1 = createOscillator();
-  const oscillator2 = createOscillator();
-
-  oscillator1.start();
-  oscillator1.frequency.value = getNote(song[0]);
-  oscillator2.start();
-  oscillator2.frequency.value = getNote(bass[0]);
-
-  const interval = setInterval(() => {
-    oscillator1.frequency.value = getNote(song[i]);
-    oscillator2.frequency.value = getNote(bass[i]);
-
-    i += 1;
-
-    if (i === bass.length) {
-      clearInterval(interval);
-
-      setTimeout(() => {
-        oscillator1.frequency.value = getNote('C0');
-        oscillator2.frequency.value = getNote('C0');
-      }, 250);
-    }
-  }, 250);
 };
 
+const playSong = async (song, durations) => {
+  let i = 1;
+
+  const oscillator = createOscillator();
+
+  oscillator.start();
+
+  for (let i = 0; i < song.length; i++) {
+    const note = song[i];
+    const duration = durations[i];
+    oscillator.frequency.value = getNote(note);
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        oscillator.frequency.value = 0; // To hear a break between equal notes
+        resolve();
+      }, duration);
+    });
+  }
+  oscillator.frequency.value = 0;
+};
+
+class Song {
+  constructor(notes, durations, sixteenth) {
+    this.notes = notes;
+    this.durations = durations.map((duration) => duration * sixteenth);
+    this.sixteenth = sixteenth;
+  }
+
+  play() {
+    playSong(this.notes, this.durations);
+  }
+}
+
+const pegasusFantasy = new Song([
+  'C0', 'C0', 'C4', 'D4', 'DS4', 'F4', 'G4', 'G4', 'G4', 'F4', 'DS4', 'F4', 'DS4', 'D4', 'C0', 'C4', 'D4', 'DS4', 'C0', 'D4', 'DS4', 'F4', 'C0', 'AS3', 'AS3', 'G4', 'C0', 'FS4', 'G4', 'B4', 'C0', 'C5', 'D5', 'DS5', 'F5', 'G5', 'G5', 'G5', 'F5', 'DS5', 'F5', 'DS5', 'D5', 'C0', 'C5', 'D5', 'DS5', 'D5', 'C5', 'DS5', 'G5', 'F5', 'DS5', 'D5', 'D5', 'AS4', 'C5', 'C5', 'C5', 'C5', 'AS4', 'AS4', 'GS5', 'GS5', 'GS5', 'G5', 'F5', 'G5', 'F5', 'F5', 'C0', 'AS4', 'AS4', 'AS4', 'AS5', 'GS5', 'G5', 'F5', 'F5', 'DS5', 'D5', 'DS5', 'C5', 'D5', 'DS5', 'D5', 'C5', 'DS5', 'D5', 'DS5', 'F5', 'DS5', 'D5', 'F5', 'C5', 'C5', 'C5', 'B4', 'C5', 'D5', 'C0', 'DS5', 'F5', 'G5', 'G5', 'F5', 'G5', 'F5', 'DS5', 'D5', 'C5', 'G5', 'D5', 'DS5', 'F5', 'F5', 'F5', 'AS5', 'GS5', 'G5', 'F5', 'G5', 'C0', 'DS5', 'F5', 'G5', 'C0', 'DS5', 'F5', 'G5', 'G5', 'F5', 'G5', 'F5', 'DS5', 'D5', 'C5', 'G5', 'D5', 'DS5', 'F5', 'F5', 'D5', 'DS5', 'F5', 'F5', 'C0', 'C0', 'GS5', 'G5', 'F5', 'G5', 'F5', 'D5', 'DS5', 'C5', 'DS5', 'F5', 'C0', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'GS5', 'C5', 'GS5', 'C5', 'GS5', 'C5', 'GS5', 'C5', 'GS5', 'C5', 'GS5', 'C5', 'GS5', 'C5', 'GS5', 'C5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'AS5', 'D5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'DS5', 'C6', 'C6', 'C6', 'C6', 'AS5', 'AS5', 'GS5', 'GS5', 'GS5', 'G5', 'F5', 'G5', 'F5', 'F5', 'C0', 'AS4', 'AS4', 'AS4', 'AS5', 'GS5', 'G5', 'F5', 'DS5', 'C0', 'C5', 'D5', 'DS5', 'D5', 'C5', 'DS5', 'D5', 'DS5', 'F5', 'DS5', 'D5', 'F5', 'C5', 'C5', 'C5', 'B4', 'C5', 'D5', 'C0', 'D5', 'DS5', 'F5', 'C0', 'DS6', 'F6', 'G6', 'G6', 'F6', 'G6', 'F6', 'DS6', 'D6', 'C6', 'G6', 'D6', 'DS6', 'F6', 'F6', 'F6', 'AS6', 'GS6', 'G6', 'F6', 'G6', 'C0', 'DS6', 'F6', 'G6', 'C0', 'DS6', 'F6', 'G6', 'G6', 'F6', 'G6', 'F6', 'DS6', 'D6', 'C6', 'G6', 'D6', 'DS6', 'F6', 'F6', 'D6', 'DS6', 'F6', 'F6', 'C0', 'C0', 'GS6', 'G6', 'F6', 'G6', 'F6', 'G6', 'F6', 'C7', 'C0', 'C7', 'C0', 'C7',
+], [
+  QUARTER, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, WHOLE+QUARTER+EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, WHOLE+EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH+HALF, EIGHTH, EIGHTH, EIGHTH, EIGHTH+HALF, EIGHTH, EIGHTH, EIGHTH, EIGHTH+HALF, EIGHTH, EIGHTH, EIGHTH, QUARTER+EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, WHOLE+QUARTER+EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, WHOLE+EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER+EIGHTH, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH+WHOLE, EIGHTH, EIGHTH, EIGHTH, QUARTER+EIGHTH, QUARTER, QUARTER+EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, QUARTER+EIGHTH, QUARTER+EIGHTH, HALF+QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER+EIGHTH, WHOLE+QUARTER+EIGHTH, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, EIGHTH, HALF+EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH+HALF, QUARTER, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER+EIGHTH, WHOLE+QUARTER+EIGHTH, EIGHTH, EIGHTH, EIGHTH, HALF+EIGHTH, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, WHOLE+WHOLE, WHOLE+HALF, HALF, WHOLE, HALF, HALF, WHOLE+HALF+QUARTER, QUARTER, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, SIXTEENTH, HALF, EIGHTH, EIGHTH, EIGHTH, QUARTER+EIGHTH, QUARTER, QUARTER+EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH+HALF, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, QUARTER+EIGHTH, QUARTER+EIGHTH, WHOLE, QUARTER, QUARTER+EIGHTH, QUARTER+EIGHTH, HALF+QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER+EIGHTH, EIGHTH+WHOLE+QUARTER, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH+HALF, EIGHTH, EIGHTH, EIGHTH, EIGHTH+HALF, QUARTER, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER+EIGHTH, EIGHTH+WHOLE+QUARTER, EIGHTH, EIGHTH, EIGHTH, HALF+EIGHTH, EIGHTH, EIGHTH, EIGHTH, HALF+QUARTER, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, WHOLE+WHOLE, WHOLE+WHOLE, WHOLE+WHOLE, WHOLE+WHOLE, QUARTER, QUARTER, QUARTER, QUARTER, WHOLE+WHOLE,
+], 90);
+
+const sorrisoResplandecente = new Song([
+  'F#5', 'F#5', 'D5', 'E5', 'F#5', 'G5', 'F#5', 'E5', 'D5', 'C#5', 'D5', 'D5', 'B4', 'C#5', 'D5', 'E5', 'D5', 'C#5', 'B4', 'A4', 'B4', 'G4', 'B4', 'G5', 'F#5', 'E5', 'D5', 'E5', 'F#5', 'G5', 'F#5', 'E5', 'D5', 'E5', 'E5', 'C0', 'D5', 'D5', 'C#5', 'D5', 'C5', 'D5', 'C0', 'C0', 'D5', 'D5', 'D5', 'D5', 'D5', 'C0', 'C5', 'A#4', 'C5', 'D5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C5', 'C0', 'A#4', 'A4', 'A#4', 'C5', 'A#4', 'A#4', 'C5', 'A#4', 'A4', 'G4', 'C0', 'G4', 'A4', 'G4', 'G4', 'F4', 'C0', 'C0', 'F4', 'F4', 'G4', 'A4', 'C0', 'A#4', 'A#4', 'C5', 'D5', 'C0', 'D5', 'D5', 'D5', 'D5', 'D5', 'C0', 'C5', 'A#4', 'C5', 'D5', 'C5', 'C5', 'D5', 'E5', 'E5', 'C0', 'F5', 'C5', 'A#4', 'A4', 'A#4', 'A#4', 'C5', 'A#4', 'A4', 'G4', 'C0', 'A4', 'A5', 'G5', 'G5', 'F5', 'C0', 'F5', 'E5', 'F5', 'C0', 'D5', 'E5', 'F5', 'F5', 'C0', 'D5', 'F5', 'F5', 'C0', 'D5', 'F5', 'C0', 'D5', 'G5', 'F5', 'E5', 'D5', 'D5', 'C5', 'C0', 'A4', 'C5', 'C5', 'C0', 'A4', 'C5', 'C0', 'C0', 'C5', 'D5', 'E5', 'E5', 'F5', 'D5', 'E5', 'E5', 'F5', 'D5', 'A5', 'G5', 'G5', 'G5', 'F5', 'G5', 'A5', 'F#5', 'F#5', 'D5', 'E5', 'F#5', 'G5', 'F#5', 'E5', 'D5', 'C#5', 'D5', 'D5', 'B4', 'C#5', 'D5', 'E5', 'D5', 'C#5', 'B4', 'A4', 'B4', 'G4', 'B4', 'G5', 'F#5', 'E5', 'E5', 'E5', 'F#5', 'G5', 'F#5', 'E5', 'D5', 'G5', 'E5', 'F#5', 'F#5', 'D5', 'E5', 'F#5', 'G5', 'F#5', 'E5', 'D5', 'C#5', 'D5', 'D5', 'B4', 'C#5', 'D5', 'E5', 'D5', 'C#5', 'B4', 'A4', 'B4', 'G4', 'B4', 'G5', 'F#5', 'E5', 'E5', 'E5', 'F#5', 'G5', 'F#5', 'E5', 'D5', 'E5', 'E5', 'C0', 'D5', 'D5', 'C#5', 'D5', 'C5'
+], [
+  QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER+EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, EIGHTH+SIXTEENTH, SIXTEENTH, QUARTER, HALF/3, HALF/3, HALF/3, WHOLE, WHOLE, WHOLE, WHOLE, HALF, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, QUARTER, HALF, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, QUARTER, HALF, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, EIGHTH, EIGHTH, EIGHTH, EIGHTH, HALF, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, QUARTER, HALF, HALF/3, HALF/3, HALF/3, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH+HALF, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, HALF/3, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH+HALF, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, HALF/3, HALF/3, HALF/3, 2*HALF/3, HALF/3, HALF, HALF/3, HALF/3, HALF/3, QUARTER, QUARTER, QUARTER+EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH, EIGHTH+WHOLE, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER+EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, HALF, HALF, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER, QUARTER+EIGHTH, EIGHTH, QUARTER, EIGHTH, EIGHTH, QUARTER, QUARTER, QUARTER, QUARTER, EIGHTH, EIGHTH, QUARTER, HALF/3, HALF/3, HALF/3, WHOLE, WHOLE,
+], 125);
+
 playButton.addEventListener('click', () => {
-  playSong(fullSong, bass);
+  // pegasusFantasy.play();
+  sorrisoResplandecente.play();
 });
